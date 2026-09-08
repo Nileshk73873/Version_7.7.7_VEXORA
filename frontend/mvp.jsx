@@ -24,7 +24,7 @@ const tokens = {
 
 function Nav({ onOpenScan }) {
   return (
-    <header className="fixed top-5 inset-x-0 z-50 max-w-3xl mx-auto px-4 pointer-events-auto">
+    <header className="fixed top-5 inset-x-0 z-50 max-w-3xl mx-auto px-4 pointer-events-auto font-talina">
       <div
         className="px-6 h-13 flex items-center justify-between rounded-full backdrop-blur-xl shadow-2xl transition-all"
         style={{
@@ -34,9 +34,9 @@ function Nav({ onOpenScan }) {
         }}
       >
         <div className="flex items-center gap-2">
-          <span className="font-bold text-[18px] tracking-wide" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Vulnora</span>
+          <span className="font-extrabold text-[18px] tracking-wide" style={{ fontFamily: "'Talina', 'Poppins', sans-serif" }}>Vulnora</span>
         </div>
-        <nav className="hidden md:flex items-center gap-7 text-[13.5px]" style={{ color: tokens.textMuted }}>
+        <nav className="hidden md:flex items-center gap-7 text-[13.5px] font-medium" style={{ color: tokens.textMuted, fontFamily: "'Talina', 'Poppins', sans-serif" }}>
           <a href="#pipeline" className="hover:text-white transition-colors">How it works</a>
           <a href="#checks" className="hover:text-white transition-colors">Checks</a>
           <a href="#remediation" className="hover:text-white transition-colors">AI Remediation</a>
@@ -44,7 +44,7 @@ function Nav({ onOpenScan }) {
         <button
           onClick={onOpenScan}
           className="text-[13px] font-semibold px-4 py-1.5 rounded-full transition-transform active:scale-95 shadow-md hover:brightness-110 cursor-pointer"
-          style={{ background: tokens.accent, color: tokens.void }}
+          style={{ background: tokens.accent, color: tokens.void, fontFamily: "'Talina', 'Poppins', sans-serif" }}
         >
           Run a scan
         </button>
@@ -94,9 +94,9 @@ function Hero({ onOpenScan }) {
       <div className="max-w-6xl mx-auto px-6 py-16 text-center relative z-10 flex flex-col items-center justify-center w-full">
         {/* MVP Main Text — Occupies 75% of Screen Middle */}
         <h1
-          className="text-[44px] sm:text-[58px] md:text-[72px] lg:text-[84px] font-extrabold leading-[1.05] mb-10 tracking-tight text-center w-[85%] md:w-[75%] max-w-[1100px] mx-auto"
+          className="text-[44px] sm:text-[58px] md:text-[72px] lg:text-[84px] font-black leading-[1.05] mb-10 tracking-tight text-center w-[85%] md:w-[75%] max-w-[1100px] mx-auto"
           style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "'Poppins', sans-serif",
             color: '#F8F5FF',
             textShadow: '0 10px 40px rgba(0,0,0,0.6)',
           }}
@@ -237,7 +237,7 @@ function Pipeline() {
     <section id="pipeline" className="py-20" style={{ background: tokens.void }}>
       <div className="max-w-7xl mx-auto px-6 mb-12">
         <p className="text-[12px] mb-2 tracking-widest uppercase font-bold" style={{ fontFamily: "'IBM Plex Mono', monospace", color: tokens.accent }}>HOW IT WORKS</p>
-        <h2 className="text-[34px] font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Five steps, one loop</h2>
+        <h2 className="text-[34px] font-bold text-white tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>Five steps, one loop</h2>
         <p className="text-[15px] mt-1.5 font-normal" style={{ color: tokens.textMuted }}>Every finding runs the same path — from detection to a verified fix.</p>
       </div>
 
@@ -292,7 +292,7 @@ function Pipeline() {
                       {s.icon}
                     </div>
                   </div>
-                  <h3 className="text-[22px] font-bold text-white mb-3 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <h3 className="text-[22px] font-semibold text-white mb-3 tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                     {s.title}
                   </h3>
                   <p className="text-[14.5px] leading-relaxed font-normal" style={{ color: tokens.textMuted }}>

@@ -57,7 +57,7 @@ const defaultFindings = [
 ];
 
 export default function ScanWorkspace({ onBack }) {
-  const [targetUrl, setTargetUrl] = useState('https://mycollegemart-webapp.onrender.com/');
+  const [targetUrl, setTargetUrl] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanStatusMessage, setScanStatusMessage] = useState('');
   const [scanError, setScanError] = useState('');
@@ -67,7 +67,7 @@ export default function ScanWorkspace({ onBack }) {
   const [copiedId, setCopiedId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  // Current active scan state
+  // Current active scan state (null initially until user starts or selects a scan)
   const [currentScan, setCurrentScan] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
 
@@ -97,11 +97,6 @@ export default function ScanWorkspace({ onBack }) {
           durationMs: s.duration_ms,
         }));
         setRecentScans(formatted);
-
-        // If no active scan is loaded yet, load the latest completed scan
-        if (!currentScan && formatted.length > 0 && formatted[0].status === 'COMPLETED') {
-          loadScanDetails(formatted[0].id);
-        }
       }
     } catch (err) {
       console.warn('Could not load scan history:', err.message);
@@ -238,39 +233,39 @@ export default function ScanWorkspace({ onBack }) {
   };
 
   // Extract score and grade
-  const currentScore = currentScan?.score?.score ?? 63;
-  const currentGrade = (currentScan?.score?.grade || 'Fair').toUpperCase();
-  const durationSec = currentScan?.durationMs ? (currentScan.durationMs / 1000).toFixed(1) + 's' : '2.8s';
+  const currentScore = currentScan?.score?.score ?? 0;
+  const currentGrade = currentScan ? (currentScan?.score?.grade || '--').toUpperCase() : '--';
+  const durationSec = currentScan?.durationMs ? (currentScan.durationMs / 1000).toFixed(1) + 's' : '--';
 
   // Extract summary breakdown
   const summary = currentScan?.summary || {
     critical: 0,
-    high: 1,
-    medium: 2,
-    low: 2,
-    total: 5,
+    high: 0,
+    medium: 0,
+    low: 0,
+    total: 0,
   };
 
   // Extract recon data
   const recon = currentScan?.recon || {};
   const ipAddressesStr = Array.isArray(recon.ipAddresses) && recon.ipAddresses.length > 0
     ? recon.ipAddresses.join(', ')
-    : '216.24.57.15, 216.24.57.7';
+    : '--';
   const sslStatus = recon.ssl
     ? (recon.ssl.valid ? `Valid (${recon.ssl.issuer || 'Secure'})` : 'Invalid or HTTPS not used')
-    : 'Invalid or HTTPS not used';
-  const responseTimeStr = recon.responseTimeMs ? `${recon.responseTimeMs}ms` : '43ms';
-  const serverHeaderStr = recon.serverHeader || 'cloudflare';
+    : '--';
+  const responseTimeStr = recon.responseTimeMs ? `${recon.responseTimeMs}ms` : '--';
+  const serverHeaderStr = recon.serverHeader || '--';
   const techStackList = Array.isArray(recon.techStack) && recon.techStack.length > 0
     ? recon.techStack
-    : ['Cloudflare'];
+    : [];
   const redirectsStr = Array.isArray(recon.redirectChain) && recon.redirectChain.length > 0
     ? `${recon.redirectChain.length} Hop(s)`
-    : 'None';
+    : '--';
 
   // Normalize findings list
   const rawFindings = currentScan?.findings;
-  const displayFindings = Array.isArray(rawFindings) && rawFindings.length > 0
+  const displayFindings = Array.isArray(rawFindings)
     ? rawFindings.map((f) => ({
         id: f.id,
         severity: f.severity,
@@ -283,7 +278,7 @@ export default function ScanWorkspace({ onBack }) {
         passed: !f.found,
         remediation: f.remediation,
       }))
-    : defaultFindings;
+    : [];
 
   // Filter findings
   const filteredFindings = displayFindings.filter((item) => {
@@ -307,60 +302,54 @@ export default function ScanWorkspace({ onBack }) {
       />
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Top Navigation */}
-        <header className="sticky top-5 z-50 max-w-6xl mx-auto px-6 w-full">
+        {/* Top Navigation — Identical to mvp.jsx Navbar styling with Talina font */}
+        <header className="fixed top-5 inset-x-0 z-50 max-w-3xl mx-auto px-4 pointer-events-auto font-talina">
           <div
-            className="px-6 h-14 flex items-center justify-between rounded-full backdrop-blur-xl shadow-2xl"
+            className="px-6 h-13 flex items-center justify-between rounded-full backdrop-blur-xl shadow-2xl transition-all"
             style={{
-              background: 'rgba(18, 24, 38, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0 0 35px rgba(124, 111, 255, 0.25), 0 12px 40px rgba(0,0,0,0.6)',
+              background: 'rgba(18, 24, 38, 0.7)',
+              border: '1px solid rgba(255, 255, 255, 0.28)',
+              boxShadow: '0 0 25px rgba(124, 111, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 12px 36px rgba(0, 0, 0, 0.5)',
             }}
           >
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#7C6FFF]/20 border border-[#7C6FFF]/50 flex items-center justify-center text-[#7C6FFF]">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8s0 0 0 0z" />
-                </svg>
-              </div>
-              <span className="font-bold text-[20px] tracking-wide" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-[18px] tracking-wide" style={{ fontFamily: "'Talina', 'Poppins', sans-serif" }}>
                 Vulnora
               </span>
             </div>
 
             {/* Nav Action Links */}
-            <div className="flex items-center gap-6 text-[14px]">
+            <div className="flex items-center gap-6 text-[13.5px] font-medium" style={{ color: tokens.textMuted, fontFamily: "'Talina', 'Poppins', sans-serif" }}>
               <button
                 onClick={() => {
                   setActiveTab('scan');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className={`font-medium transition-colors cursor-pointer ${
-                  activeTab === 'scan' ? 'text-white border-b-2 border-[#7C6FFF] pb-0.5' : 'text-[#8B98A9] hover:text-white'
+                className={`hover:text-white transition-colors cursor-pointer ${
+                  activeTab === 'scan' ? 'text-white font-semibold' : ''
                 }`}
               >
                 New Scan
               </button>
               <button
                 onClick={scrollToHistory}
-                className={`font-medium transition-colors cursor-pointer ${
-                  activeTab === 'history' ? 'text-white border-b-2 border-[#7C6FFF] pb-0.5' : 'text-[#8B98A9] hover:text-white'
+                className={`hover:text-white transition-colors cursor-pointer ${
+                  activeTab === 'history' ? 'text-white font-semibold' : ''
                 }`}
               >
                 History
               </button>
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-[13px] font-medium px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-all border border-white/15 cursor-pointer ml-2"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="19" y1="12" x2="5" y2="12" />
-                  <polyline points="12 19 5 12 12 5" />
-                </svg>
-                Back to Home
-              </button>
             </div>
+
+            {/* CTA Back Button */}
+            <button
+              onClick={onBack}
+              className="text-[13px] font-semibold px-4 py-1.5 rounded-full transition-transform active:scale-95 shadow-md hover:brightness-110 cursor-pointer"
+              style={{ background: tokens.accent, color: tokens.void, fontFamily: "'Talina', 'Poppins', sans-serif" }}
+            >
+              Back to Home
+            </button>
           </div>
         </header>
 
@@ -369,9 +358,9 @@ export default function ScanWorkspace({ onBack }) {
           {/* Target Scanner Hero MVP */}
           <div className="w-full max-w-4xl text-center flex flex-col items-center justify-center min-h-[calc(100vh-140px)] my-auto py-12">
             <h1
-              className="text-[44px] sm:text-[62px] md:text-[76px] lg:text-[84px] font-extrabold tracking-tight leading-[1.06] mb-6 text-center text-white"
+              className="text-[44px] sm:text-[62px] md:text-[76px] lg:text-[84px] font-black tracking-tight leading-[1.06] mb-6 text-center text-white"
               style={{
-                fontFamily: "'Space Grotesk', sans-serif",
+                fontFamily: "'Poppins', sans-serif",
                 textShadow: '0 10px 40px rgba(0,0,0,0.6)',
               }}
             >
@@ -461,35 +450,42 @@ export default function ScanWorkspace({ onBack }) {
           {/* Audit Dashboard Workspace */}
           <div ref={resultsRef} className="w-full flex flex-col gap-10 pt-16 pb-20 mt-8 border-t border-white/10">
             {/* Top Stats Dashboard Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-stretch">
               {/* Security Health Score Arc Dial Box */}
-              <div className="lg:col-span-4 p-7 rounded-3xl bg-[#121826]/80 border border-white/15 backdrop-blur-xl flex flex-col items-center justify-between text-center shadow-2xl relative overflow-hidden">
-                <p className="text-[11px] font-mono font-bold tracking-widest text-[#8B98A9] uppercase mb-2">
+              <div className="lg:col-span-4 p-6 rounded-3xl bg-[#121826]/80 border border-white/15 backdrop-blur-xl flex flex-col items-center justify-between text-center shadow-2xl min-h-[220px]">
+                <p className="text-[11px] font-mono font-bold tracking-widest text-[#8B98A9] uppercase mb-1">
                   SECURITY HEALTH SCORE
                 </p>
 
-                {/* SVG Semi-Circle Radial Gauge */}
-                <div className="relative w-48 h-28 flex items-center justify-center my-2">
-                  <svg className="w-44 h-44 -rotate-90 transform" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#1F293D" strokeWidth="10" strokeDasharray="314.15" strokeDashoffset="157" strokeLinecap="round" />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="50"
+                {/* SVG Upward Radial Gauge */}
+                <div className="relative w-52 h-28 flex flex-col items-center justify-center my-1">
+                  <svg className="w-52 h-28" viewBox="0 0 120 65">
+                    {/* Background Track Arc */}
+                    <path
+                      d="M 12 58 A 48 48 0 0 1 108 58"
                       fill="none"
-                      stroke={currentScore >= 80 ? '#10B981' : currentScore >= 50 ? '#F5A623' : '#FF5C5C'}
-                      strokeWidth="10"
-                      strokeDasharray="314.15"
-                      strokeDashoffset={157 + (157 * (100 - currentScore)) / 100}
+                      stroke="#1F293D"
+                      strokeWidth="9"
                       strokeLinecap="round"
                     />
+                    {/* Active Score Gauge Arc */}
+                    <path
+                      d="M 12 58 A 48 48 0 0 1 108 58"
+                      fill="none"
+                      stroke={currentScore >= 80 ? '#10B981' : currentScore >= 50 ? '#F5A623' : '#FF5C5C'}
+                      strokeWidth="9"
+                      strokeDasharray="150.8"
+                      strokeDashoffset={150.8 * (1 - currentScore / 100)}
+                      strokeLinecap="round"
+                      className="transition-all duration-1000 ease-out"
+                    />
                   </svg>
-                  <div className="absolute bottom-2 flex flex-col items-center">
-                    <span className="text-[40px] font-black tracking-tight leading-none" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <div className="absolute bottom-1 flex flex-col items-center justify-center">
+                    <span className="text-[38px] font-black tracking-tight leading-none text-white" style={{ fontFamily: "'Poppins', sans-serif" }}>
                       {currentScore}
                     </span>
                     <span
-                      className={`text-[12px] font-bold tracking-widest uppercase mt-1 ${
+                      className={`text-[11px] font-mono font-bold tracking-widest uppercase mt-0.5 ${
                         currentScore >= 80 ? 'text-[#10B981]' : currentScore >= 50 ? 'text-[#F5A623]' : 'text-[#FF5C5C]'
                       }`}
                     >
@@ -498,40 +494,40 @@ export default function ScanWorkspace({ onBack }) {
                   </div>
                 </div>
 
-                <div className="mt-3 text-[12px] text-[#8B98A9]">
+                <div className="mt-2 text-[12px] text-[#8B98A9]">
                   <p className="font-mono text-white/80 truncate max-w-[220px] mx-auto">{currentScan?.targetUrl || targetUrl}</p>
                   <p className="mt-0.5">Duration: {durationSec}</p>
                 </div>
               </div>
 
               {/* Severity Breakdown Counter Cards */}
-              <div className="lg:col-span-5 grid grid-cols-5 gap-3 p-6 rounded-3xl bg-[#121826]/80 border border-white/15 backdrop-blur-xl items-center shadow-2xl">
-                <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 h-full">
-                  <span className="text-[26px] font-bold text-[#FF5C5C]">{summary.critical}</span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase text-[#FF5C5C] tracking-wider mt-1">CRITICAL</span>
+              <div className="lg:col-span-5 grid grid-cols-5 gap-2.5 p-6 rounded-3xl bg-[#121826]/80 border border-white/15 backdrop-blur-xl items-center shadow-2xl min-h-[220px]">
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/5 border border-white/10 h-full">
+                  <span className="text-[24px] font-bold text-[#FF5C5C] font-mono">{summary.critical}</span>
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#FF5C5C] tracking-wider mt-1">CRITICAL</span>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 h-full">
-                  <span className="text-[26px] font-bold text-[#F5A623]">{summary.high}</span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase text-[#F5A623] tracking-wider mt-1">HIGH</span>
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/5 border border-white/10 h-full">
+                  <span className="text-[24px] font-bold text-[#F5A623] font-mono">{summary.high}</span>
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#F5A623] tracking-wider mt-1">HIGH</span>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 h-full">
-                  <span className="text-[26px] font-bold text-[#FACC15]">{summary.medium}</span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase text-[#FACC15] tracking-wider mt-1">MEDIUM</span>
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/5 border border-white/10 h-full">
+                  <span className="text-[24px] font-bold text-[#FACC15] font-mono">{summary.medium}</span>
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#FACC15] tracking-wider mt-1">MEDIUM</span>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 h-full">
-                  <span className="text-[26px] font-bold text-[#5EEAD4]">{summary.low}</span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase text-[#5EEAD4] tracking-wider mt-1">LOW</span>
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/5 border border-white/10 h-full">
+                  <span className="text-[24px] font-bold text-[#5EEAD4] font-mono">{summary.low}</span>
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#5EEAD4] tracking-wider mt-1">LOW</span>
                 </div>
-                <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 h-full">
-                  <span className="text-[26px] font-bold text-[#7C6FFF]">{summary.total}</span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase text-[#7C6FFF] tracking-wider mt-1">TOTAL</span>
+                <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/5 border border-white/10 h-full">
+                  <span className="text-[24px] font-bold text-[#7C6FFF] font-mono">{summary.total}</span>
+                  <span className="text-[9px] font-mono font-bold uppercase text-[#7C6FFF] tracking-wider mt-1">TOTAL</span>
                 </div>
               </div>
 
               {/* Actions Quick Access Card */}
-              <div className="lg:col-span-3 p-6 rounded-3xl bg-[#121826]/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between shadow-2xl">
-                <p className="text-[11px] font-mono font-bold tracking-widest text-[#8B98A9] uppercase mb-3">ACTIONS</p>
-                <div className="flex flex-col gap-3">
+              <div className="lg:col-span-3 p-6 rounded-3xl bg-[#121826]/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between shadow-2xl min-h-[220px]">
+                <p className="text-[11px] font-mono font-bold tracking-widest text-[#8B98A9] uppercase mb-2">ACTIONS</p>
+                <div className="flex flex-col gap-3 my-auto">
                   <button
                     onClick={downloadReport}
                     className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 font-semibold text-[13.5px] transition-all cursor-pointer shadow-md"
@@ -567,7 +563,7 @@ export default function ScanWorkspace({ onBack }) {
                   <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
                   <path d="M2 12h20" />
                 </svg>
-                <h2 className="text-[20px] font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                <h2 className="text-[20px] font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                   Reconnaissance
                 </h2>
               </div>
@@ -645,7 +641,7 @@ export default function ScanWorkspace({ onBack }) {
                       <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
                     </svg>
                   </div>
-                  <h2 className="text-[22px] font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <h2 className="text-[22px] font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                     Vulnerability Findings
                   </h2>
                 </div>
@@ -670,7 +666,13 @@ export default function ScanWorkspace({ onBack }) {
 
               {/* Detailed Vulnerability Findings List */}
               <div className="flex flex-col gap-4">
-                {filteredFindings.map((item) => {
+                {filteredFindings.length === 0 ? (
+                  <div className="p-8 text-center text-[#8B98A9] text-[13.5px] bg-white/5 border border-white/10 rounded-2xl">
+                    <p className="font-medium text-white/70">No vulnerability findings to display.</p>
+                    <p className="text-[12px] text-[#8B98A9] mt-1">Enter a target URL above and click "Start Audit" to perform a real-time security scan.</p>
+                  </div>
+                ) : (
+                  filteredFindings.map((item) => {
                   const isExpanded = expandedId === item.id;
                   const remediation = item.remediation;
 
@@ -707,7 +709,7 @@ export default function ScanWorkspace({ onBack }) {
                               {item.severity}
                             </span>
 
-                            <h3 className="text-[17px] font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            <h3 className="text-[17px] font-semibold text-white tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                               {item.title}
                             </h3>
                           </div>
@@ -827,7 +829,7 @@ export default function ScanWorkspace({ onBack }) {
                       </div>
                     </BorderGlow>
                   );
-                })}
+                }))}
               </div>
             </div>
 
@@ -842,7 +844,7 @@ export default function ScanWorkspace({ onBack }) {
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <polyline points="10 9 9 9 8 9" />
                   </svg>
-                  <h2 className="text-[22px] font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  <h2 className="text-[22px] font-bold tracking-tight" style={{ fontFamily: "'Poppins', sans-serif" }}>
                     Recent Scans
                   </h2>
                 </div>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Automated AI-Powered Web Security Assessment Tool — scan your authorized web application for vulnerabilities and get AI-generated remediation guidance." />
+  <title>WebSec AI — Security Assessment Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- HEADER                                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">WebSec<span class="logo-accent">AI</span></span>
+      </div>
+      <nav class="header-nav">
+        <a href="#scan-section" class="nav-link">New Scan</a>
+        <a href="#history-section" class="nav-link">History</a>
+        <a href="https://github.com" target="_blank" rel="noopener" class="nav-link">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- HERO                                                -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">AI-Powered Security Scanner</div>
+      <h1 class="hero-title">Find Vulnerabilities.<br/>Fix Them Instantly.</h1>
+      <p class="hero-subtitle">
+        Scan your authorized web application for common security vulnerabilities.
+        Get a Security Health Score and AI-generated, copy-pasteable remediation code.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SCAN INPUT                                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <section id="scan-section" class="section">
+    <div class="container">
+      <div class="scan-card card">
+        <h2 class="card-title">Start Security Scan</h2>
+
+        <div class="input-group" id="url-input-group">
+          <label class="input-label" for="target-url">Target URL</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔗</span>
+            <input
+              id="target-url"
+              type="url"
+              class="input"
+              placeholder="https://example.com"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <p class="input-hint" id="url-error"></p>
+        </div>
+
+        <div class="auth-check">
+          <label class="checkbox-label" for="authorized-check">
+            <input type="checkbox" id="authorized-check" class="checkbox" />
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">
+              I confirm that I am the owner or have explicit written authorization to scan this target.
+            </span>
+          </label>
+        </div>
+
+        <button id="scan-btn" class="btn btn-primary" disabled>
+          <span class="btn-icon">⚡</span>
+          <span class="btn-text">Start Scan</span>
+        </button>
+
+        <!-- Progress -->
+        <div id="scan-progress" class="scan-progress hidden">
+          <div class="progress-header">
+            <span class="progress-label" id="progress-label">Initialising scan…</span>
+            <span class="progress-dots"><span>.</span><span>.</span><span>.</span></span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+          </div>
+          <div class="progress-steps" id="progress-steps">
+            <span class="step" id="step-fetch">🔗 Fetching target</span>
+            <span class="step" id="step-recon">🔍 Reconnaissance</span>
+            <span class="step" id="step-scan">🛡️ Running scanners</span>
+            <span class="step" id="step-ai">🤖 AI remediation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- RESULTS DASHBOARD                                   -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="results-section" class="hidden">
+
+    <!-- Score + Summary Row -->
+    <section class="section">
+      <div class="container">
+        <div class="results-header-row">
+
+          <!-- Score Gauge -->
+          <div class="score-card card">
+            <h3 class="card-subtitle">Security Health Score</h3>
+            <div class="gauge-wrapper">
+              <svg class="gauge-svg" viewBox="0 0 200 120" id="gauge-svg">
+                <!-- Background arc -->
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1e2a3a" stroke-width="16" stroke-linecap="round"/>
+                <!-- Score arc -->
+                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" id="gauge-arc"
+                      stroke="#00ff88" stroke-width="16" stroke-linecap="round"
+                      stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+              </svg>
+              <div class="gauge-center">
+                <span class="gauge-score" id="gauge-score">--</span>
+                <span class="gauge-label" id="gauge-grade">Pending</span>
+              </div>
+            </div>
+            <div class="score-meta">
+              <span id="score-target-url" class="score-target"></span>
+              <span id="score-duration" class="score-duration"></span>
+            </div>
+          </div>
+
+          <!-- Summary Severity Cards -->
+          <div class="severity-grid">
+            <div class="sev-card sev-critical">
+              <span class="sev-count" id="sev-critical">0</span>
+              <span class="sev-label">Critical</span>
+            </div>
+            <div class="sev-card sev-high">
+              <span class="sev-count" id="sev-high">0</span>
+              <span class="sev-label">High</span>
+            </div>
+            <div class="sev-card sev-medium">
+              <span class="sev-count" id="sev-medium">0</span>
+              <span class="sev-label">Medium</span>
+            </div>
+            <div class="sev-card sev-low">
+              <span class="sev-count" id="sev-low">0</span>
+              <span class="sev-label">Low</span>
+            </div>
+            <div class="sev-card sev-info">
+              <span class="sev-count" id="sev-total">0</span>
+              <span class="sev-label">Total</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="action-card card">
+            <h3 class="card-subtitle">Actions</h3>
+            <button id="download-report-btn" class="btn btn-secondary">
+              <span>📥</span> Download Report
+            </button>
+            <button id="new-scan-btn" class="btn btn-ghost">
+              <span>🔄</span> New Scan
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recon Panel -->
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <h3 class="card-title">🔍 Reconnaissance</h3>
+          <div class="recon-grid" id="recon-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Findings -->
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <div class="findings-header">
+            <h3 class="card-title">🛡️ Vulnerability Findings</h3>
+            <div class="findings-filters">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="CRITICAL">Critical</button>
+              <button class="filter-btn" data-filter="HIGH">High</button>
+              <button class="filter-btn" data-filter="MEDIUM">Medium</button>
+              <button class="filter-btn" data-filter="LOW">Low</button>
+            </div>
+          </div>
+          <div id="findings-list" class="findings-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SCAN HISTORY                                        -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <section id="history-section" class="section">
+    <div class="container">
+      <div class="card">
+        <div class="findings-header">
+          <h3 class="card-title">📋 Recent Scans</h3>
+          <button id="refresh-history-btn" class="btn btn-ghost btn-sm">↻ Refresh</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <p class="empty-state">No scans yet. Run your first scan above.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- DISCLAIMER FOOTER                                   -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="disclaimer">
+        ⚠️ <strong>Legal Disclaimer:</strong> This tool is for authorized security testing only.
+        Unauthorized scanning of systems you do not own is illegal and unethical.
+        Always obtain written permission before scanning.
+      </div>
+      <p class="footer-copy">WebSec AI v1.0 · Built for authorized security assessment</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

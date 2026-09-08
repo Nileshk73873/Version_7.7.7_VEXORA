@@ -65,11 +65,19 @@ const scanLimiter = rateLimit({
   keyGenerator: (req) => req.ip,
 });
 
-// ── Static files (if frontend build is present) ───────────
-const publicDir = path.join(__dirname, '../public');
-if (fs.existsSync(publicDir)) {
-  app.use(express.static(publicDir));
-}
+// ── Root route ───────────────────────────────────────────
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'online',
+    service: 'Vulnora Security Assessment API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      scans: '/api/scan',
+      report: '/api/report/:id',
+    },
+  });
+});
 
 // ── API Routes ────────────────────────────────────────────
 app.use('/api/scan', scanRoutes);
@@ -85,21 +93,9 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ── Serve frontend for non-API routes or return API status ──
-app.get('*', (_req, res) => {
-  const indexPath = path.join(__dirname, '../public', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  }
-  res.json({
-    status: 'online',
-    message: 'Vulnora Security Assessment API',
-    endpoints: {
-      health: '/api/health',
-      scans: '/api/scan',
-      report: '/api/report/:id',
-    },
-  });
+// ── 404 handler for unknown routes ────────────────────────
+app.use((_req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
 });
 
 // ── Global error handler ──────────────────────────────────

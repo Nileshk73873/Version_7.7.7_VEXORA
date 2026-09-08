@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Aurora from './Aurora';
 import BorderGlow from './BorderGlow';
 import SpecularButton from './SpecularButton';
-import { startScan, getScan, listScans, getReportUrl } from './api';
+import { startScan, getScan, listScans, getReportUrl, deleteScan } from './api';
 
 const tokens = {
   void: '#0A0E14',
@@ -65,6 +65,7 @@ export default function ScanWorkspace({ onBack }) {
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
   const [expandedId, setExpandedId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   // Current active scan state
   const [currentScan, setCurrentScan] = useState(null);
@@ -207,22 +208,26 @@ export default function ScanWorkspace({ onBack }) {
       window.open(getReportUrl(currentScan.scanId), '_blank');
       return;
     }
+    // No scan yet — nothing to download
+    alert('Run a scan first to generate a downloadable report.');
+  };
 
-    // Fallback export if no current scan
-    const reportData = {
-      targetUrl,
-      timestamp: new Date().toISOString(),
-      score: currentScore,
-      grade: currentGrade,
-      findings: displayFindings,
-    };
-    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Vulnora_Audit_Report_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDeleteScan = async (e, scanId) => {
+    e.stopPropagation(); // Don't trigger row click
+    if (!window.confirm('Delete this scan and all its data?')) return;
+    setDeletingId(scanId);
+    try {
+      await deleteScan(scanId);
+      // If the deleted scan is the currently displayed one, clear it
+      if (currentScan && currentScan.scanId === scanId) {
+        setCurrentScan(null);
+      }
+      await loadHistory();
+    } catch (err) {
+      alert('Failed to delete scan: ' + err.message);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const scrollToHistory = () => {
@@ -406,6 +411,7 @@ export default function ScanWorkspace({ onBack }) {
                 />
 
                 <SpecularButton
+                  type="submit"
                   size="md"
                   radius={999}
                   tint="#161E2E"
@@ -862,14 +868,14 @@ export default function ScanWorkspace({ onBack }) {
                     <div
                       key={scan.id}
                       onClick={() => !scan.id.startsWith('temp-') && loadScanDetails(scan.id)}
-                      className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-white/20 transition-all cursor-pointer"
+                      className="p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-white/20 transition-all cursor-pointer group"
                     >
-                      <div className="flex flex-col gap-1">
-                        <span className="font-mono text-[14.5px] font-semibold text-white">{scan.url}</span>
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <span className="font-mono text-[14.5px] font-semibold text-white truncate">{scan.url}</span>
                         <span className="text-[12px] font-mono text-[#8B98A9]">{scan.timestamp}</span>
                       </div>
 
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 shrink-0">
                         {scan.score !== null && scan.score !== undefined ? (
                           <div className="flex items-center gap-2">
                             <span className="text-[12px] text-[#8B98A9] font-medium">{scan.grade}</span>
@@ -888,6 +894,47 @@ export default function ScanWorkspace({ onBack }) {
                         >
                           {scan.status}
                         </span>
+
+                        {/* Download report button (completed scans only) */}
+                        {scan.status === 'COMPLETED' && !scan.id.startsWith('temp-') && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); window.open(getReportUrl(scan.id), '_blank'); }}
+                            title="Download report"
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-[#7C6FFF]/20 hover:bg-[#7C6FFF]/40 border border-[#7C6FFF]/30 text-[#A78BFA] transition-all cursor-pointer"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="12" y1="18" x2="12" y2="12" />
+                              <polyline points="9 15 12 18 15 15" />
+                            </svg>
+                          </button>
+                        )}
+
+                        {/* Delete button */}
+                        {!scan.id.startsWith('temp-') && (
+                          <button
+                            onClick={(e) => handleDeleteScan(e, scan.id)}
+                            disabled={deletingId === scan.id}
+                            title="Delete scan"
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 text-red-400 transition-all cursor-pointer disabled:opacity-50"
+                          >
+                            {deletingId === scan.id ? (
+                              <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                                <path d="M12 2a10 10 0 0 1 10 10" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                                <path d="M9 6V4h6v2" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))

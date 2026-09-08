@@ -8,7 +8,8 @@ export default defineConfig({
     port: 5173,
     host: true,
     proxy: {
-      '/api': {
+      // Use regex to avoid matching /api.js (our frontend module)
+      '^/api(/|$)': {
         target: 'http://localhost:5000',
         changeOrigin: true,
       },

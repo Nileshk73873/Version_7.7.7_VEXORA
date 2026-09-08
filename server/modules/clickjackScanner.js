@@ -63,7 +63,7 @@ function scanClickjacking(headers) {
     };
   }
 
-  logger.debug('Clickjacking scan complete', { protected });
+  logger.debug('Clickjacking scan complete', { protected: isProtected });
   return finding;
 }
 

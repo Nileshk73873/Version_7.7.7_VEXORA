@@ -1,6 +1,8 @@
-// API base — empty string so Vite proxy handles /api/* in dev
-// In production the same Express server serves both frontend and /api
-const API_BASE = '/api';
+// API Base URL
+// In development: Vite proxy forwards '/api' to backend
+// In production (separated URLs): VITE_API_URL is e.g. 'https://vulnora-server.onrender.com'
+const envApiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+const API_BASE = envApiUrl ? (envApiUrl.endsWith('/api') ? envApiUrl : `${envApiUrl}/api`) : '/api';
 
 export const startScan = async (url) => {
   const res = await fetch(`${API_BASE}/scan`, {

@@ -5,12 +5,16 @@
  */
 
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config();
+if (!process.env.DATABASE_URL && !process.env.PORT) {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+}
 const express     = require('express');
 const cors        = require('cors');
 const helmet      = require('helmet');
 const morgan      = require('morgan');
 const rateLimit   = require('express-rate-limit');
+const fs          = require('fs');
 const logger      = require('./utils/logger');
 
 // ── Route imports ─────────────────────────────────────────
@@ -26,12 +30,15 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// ── CORS ──────────────────────────────────────────────────
+// ── CORS (Allows Frontend URL or all origins with preflight support) ───
+const corsOrigin = process.env.CLIENT_URL || process.env.FRONTEND_URL || '*';
 app.use(cors({
-  origin:      process.env.NODE_ENV === 'production' ? false : '*',
-  methods:     ['GET', 'POST', 'DELETE'],
+  origin: corsOrigin === '*' ? '*' : corsOrigin.split(',').map(s => s.trim()),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+app.options('*', cors());
 
 // ── Body parsing ──────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
@@ -58,11 +65,14 @@ const scanLimiter = rateLimit({
   keyGenerator: (req) => req.ip,
 });
 
-// ── Static files (frontend) ───────────────────────────────
-app.use(express.static(path.join(__dirname, '../public')));
+// ── Static files (if frontend build is present) ───────────
+const publicDir = path.join(__dirname, '../public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+}
 
 // ── API Routes ────────────────────────────────────────────
-app.use('/api/scan', scanRoutes); // Rate limiting removed for testing
+app.use('/api/scan', scanRoutes);
 app.use('/api/report', reportRoutes);
 
 // ── Health check ──────────────────────────────────────────
@@ -75,9 +85,21 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ── Serve frontend for all non-API routes (SPA fallback) ──
+// ── Serve frontend for non-API routes or return API status ──
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+  const indexPath = path.join(__dirname, '../public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  res.json({
+    status: 'online',
+    message: 'Vulnora Security Assessment API',
+    endpoints: {
+      health: '/api/health',
+      scans: '/api/scan',
+      report: '/api/report/:id',
+    },
+  });
 });
 
 // ── Global error handler ──────────────────────────────────

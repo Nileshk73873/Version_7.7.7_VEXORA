@@ -1,17 +1,9 @@
-/**
- * db/index.js
- * PostgreSQL connection pool — shared across all modules.
- *
- * Priority:
- *   1. DATABASE_URL  — single connection string (used in production / Render)
- *   2. Individual DB_* env vars — used for local development
- *
- * DATABASE_URL format:
- *   postgresql://username:password@host:port/dbname
- */
-
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+const fs = require('fs');
+require('dotenv').config();
+if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
+  require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+}
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
@@ -19,7 +11,7 @@ const poolConfig = process.env.DATABASE_URL
   ? {
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }  // Required for Render/Heroku
+        ? { rejectUnauthorized: false }  // Required for Render/Heroku/Neon/Supabase
         : false,
       max: 10,
       idleTimeoutMillis: 30000,
@@ -38,13 +30,24 @@ const poolConfig = process.env.DATABASE_URL
 
 const pool = new Pool(poolConfig);
 
-// Verify connection on startup
-pool.connect((err, client, release) => {
+// Verify connection and automatically initialize schema on startup
+pool.connect(async (err, client, release) => {
   if (err) {
     logger.error('❌ PostgreSQL connection failed:', err.message);
   } else {
     logger.info('✅ PostgreSQL connected successfully');
-    release();
+    try {
+      const schemaPath = path.join(__dirname, 'schema.sql');
+      if (fs.existsSync(schemaPath)) {
+        const schema = fs.readFileSync(schemaPath, 'utf8');
+        await client.query(schema);
+        logger.info('✅ Database schema verified / initialized');
+      }
+    } catch (schemaErr) {
+      logger.error('Database auto-schema error:', schemaErr.message);
+    } finally {
+      release();
+    }
   }
 });
 

@@ -7,7 +7,10 @@
  */
 
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config();
+if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
+  require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+}
 const { Pool } = require('pg');
 const fs   = require('fs');
 

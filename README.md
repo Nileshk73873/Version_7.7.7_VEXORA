@@ -1,4 +1,4 @@
-# 🛡️ WebSec AI — Automated Web Security Assessment Tool
+# 🛡️ Vulnora AI — Automated Web Security Assessment Tool
 
 > An AI-powered web security scanner that detects common vulnerabilities in authorized web applications and generates developer-friendly remediation guidance using Google Gemini.
 

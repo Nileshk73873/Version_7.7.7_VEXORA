@@ -4,12 +4,16 @@
  * remediation guidance for each detected vulnerability.
  */
 
+const path = require('path');
 require('dotenv').config();
+if (!process.env.GEMINI_API_KEY) {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+}
 const axios  = require('axios');
 const logger = require('./utils/logger');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const GEMINI_MODEL   = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**

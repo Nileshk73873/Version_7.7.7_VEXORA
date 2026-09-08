@@ -1,4 +1,4 @@
-# 🛡️ WebSec AI — Automated Web Security Assessment Tool
+# 🛡️ Vulnora — Automated Web Security Assessment Tool
 
 > An AI-powered web security scanner that detects common vulnerabilities in authorized web applications and generates developer-friendly remediation guidance using Google Gemini.
 
@@ -130,7 +130,7 @@ Then open `.env` and fill in your values (see [Environment Variables](#environme
 ### 4. Create the PostgreSQL database
 ```sql
 -- In psql or pgAdmin:
-CREATE DATABASE websec_db;
+CREATE DATABASE vulnora ;
 ```
 
 ### 5. Initialize the database schema
@@ -242,7 +242,7 @@ NODE_ENV=development
 # PostgreSQL
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=websec_db
+DB_NAME=vulnora
 DB_USER=postgres
 DB_PASSWORD=your_postgres_password
 

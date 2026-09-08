@@ -1,16 +1,17 @@
 {
-  "name": "web-security-assessment-tool",
+  "name": "vulnora",
   "version": "1.0.0",
   "description": "Automated AI-Powered Web Security Assessment System",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "nodemon server/server.js",
+    "dev:backend": "nodemon server/server.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
     "db:init": "node server/db/init.js",
     "db:reset": "node server/db/init.js --reset"
   },
   "keywords": ["security", "vulnerability", "scanner", "ai", "pentest"],
-  "author": "",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.7",

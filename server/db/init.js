@@ -6,10 +6,10 @@
  *   npm run db:reset         → drop all tables then recreate
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 const fs   = require('fs');
-const path = require('path');
 
 const isReset = process.argv.includes('--reset');
 

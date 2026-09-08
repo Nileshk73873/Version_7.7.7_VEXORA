@@ -10,7 +10,8 @@
  *   postgresql://username:password@host:port/dbname
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 

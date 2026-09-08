@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Aurora from './Aurora';
 import BorderGlow from './BorderGlow';
 import SpecularButton from './SpecularButton';
 import { startScan, getScan, listScans, getReportUrl, deleteScan } from './api';
+import ScanChat from './ScanChat';
 
 const tokens = {
   void: '#0A0E14',
@@ -70,6 +71,12 @@ export default function ScanWorkspace({ onBack }) {
   // Current active scan state (null initially until user starts or selects a scan)
   const [currentScan, setCurrentScan] = useState(null);
   const [recentScans, setRecentScans] = useState([]);
+  // Per-scan chat history — persisted for the entire page session
+  const [chatHistories, setChatHistories] = useState({});
+
+  const saveChatHistory = useCallback((scanId, messages) => {
+    setChatHistories(prev => ({ ...prev, [scanId]: messages }));
+  }, []);
 
   const historyRef = useRef(null);
   const resultsRef = useRef(null);
@@ -943,6 +950,35 @@ export default function ScanWorkspace({ onBack }) {
                 )}
               </div>
             </div>
+
+            {/* ── AI Security Chat ───────────────────────────────── */}
+            {currentScan && currentScan.status === 'completed' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#7C6FFF] to-[#C084FC] flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-[22px] font-bold tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      Ask AI About This Scan
+                    </h2>
+                    <p className="text-[13px] text-[#8B98A9] mt-0.5">
+                      Vulnora AI has full context of your security report — ask anything.
+                    </p>
+                  </div>
+                </div>
+                <ScanChat
+                  key={currentScan.scanId}
+                  scanId={currentScan.scanId}
+                  targetUrl={currentScan.targetUrl}
+                  score={currentScan.score?.score}
+                  initialMessages={chatHistories[currentScan.scanId] || null}
+                  onMessagesChange={(msgs) => saveChatHistory(currentScan.scanId, msgs)}
+                />
+              </div>
+            )}
 
             {/* Legal Disclaimer Footer */}
             <div className="pt-8 pb-4 text-center text-[#8B98A9] text-[12.5px] flex flex-col items-center gap-2">

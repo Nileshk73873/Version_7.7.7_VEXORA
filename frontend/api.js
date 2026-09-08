@@ -82,3 +82,24 @@ export async function checkHealth() {
     return { status: 'offline', error: err.message };
   }
 }
+
+/**
+ * Send a chat message to the AI about a specific scan.
+ * @param {string} scanId
+ * @param {string} message
+ * @param {Array<{role: string, text: string}>} history
+ * @returns {Promise<{reply: string, model: string, usage: object}>}
+ */
+export async function sendChatMessage(scanId, message, history = []) {
+  const res = await fetch(`${API_BASE}/chat/${scanId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to get AI response');
+  }
+  return data;
+}
+

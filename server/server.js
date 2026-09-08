@@ -20,6 +20,7 @@ const logger      = require('./utils/logger');
 // ── Route imports ─────────────────────────────────────────
 const scanRoutes   = require('./routes/scan');
 const reportRoutes = require('./routes/report');
+const chatRoutes   = require('./routes/chat');
 
 const app  = express();
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -75,6 +76,7 @@ app.get('/', (_req, res) => {
       health: '/api/health',
       scans: '/api/scan',
       report: '/api/report/:id',
+      chat: '/api/chat/:scanId',
     },
   });
 });
@@ -82,6 +84,7 @@ app.get('/', (_req, res) => {
 // ── API Routes ────────────────────────────────────────────
 app.use('/api/scan', scanRoutes);
 app.use('/api/report', reportRoutes);
+app.use('/api/chat', chatRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

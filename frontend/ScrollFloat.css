@@ -1,0 +1,30 @@
+.scroll-float {
+  overflow: hidden;
+  width: 100%;
+  text-align: center;
+}
+
+.scroll-float-text {
+  display: inline-block !important;
+  font-size: clamp(1.8rem, 4.2vw, 3.5rem) !important; /* ~30px to ~56px max, slightly under the 84px MVP main title */
+  font-weight: 800 !important;
+  text-align: center;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  white-space: normal;
+}
+
+.word {
+  display: inline-block !important;
+  white-space: nowrap !important;
+}
+
+.char {
+  display: inline-block !important;
+}
+
+.space {
+  display: inline-block !important;
+  width: 0.3em;
+}

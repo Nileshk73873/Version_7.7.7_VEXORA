@@ -91,7 +91,7 @@ app.use((err, _req, res, _next) => {
 
 // ── Start server ──────────────────────────────────────────
 app.listen(PORT, () => {
-  logger.info(`🚀 WebSec Assessment Server running on http://localhost:${PORT}`);
+  logger.info(`🚀 Vulnora Security Assessment Server running on http://localhost:${PORT}`);
   logger.info(`   Environment : ${process.env.NODE_ENV || 'development'}`);
   logger.info(`   API Base    : http://localhost:${PORT}/api`);
   logger.info(`   Health      : http://localhost:${PORT}/api/health`);
